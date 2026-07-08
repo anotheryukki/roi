@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+<title>$ROI — Retarded Online Investment</title>
+<link rel="icon" href="roi-pfp-trans.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          lime: { DEFAULT: '#d3ff08', dim: '#b7e000', dark: '#1a2400' },
+          ink: { DEFAULT: '#0a0a08', 2: '#141410' },
+        },
+        fontFamily: {
+          display: ['Unbounded', 'sans-serif'],
+          body: ['Inter', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'monospace'],
+        },
+        borderRadius: { '28': '28px' },
+      },
+    },
+  };
+</script>
+
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: #d3ff08;
+  }
+
+  .shadow-elevated {
+    box-shadow:
+      0 1px 2px rgba(0,0,0,0.5),
+      0 10px 24px -6px rgba(0,0,0,0.55),
+      0 4px 44px -10px rgba(211,255,8,0.28);
+  }
+  .shadow-floating {
+    filter: drop-shadow(0 14px 18px rgba(0,0,0,0.45)) drop-shadow(0 4px 8px rgba(0,0,0,0.35));
+  }
+
+  .bg-vignette {
+    background: radial-gradient(ellipse at 50% 42%, rgba(10,10,8,0) 40%, rgba(10,10,8,0.22) 100%);
+  }
+
+  /* Cameo peek animation */
+  #cameo {
+    transform: translate(115%, -50%);
+    transition: transform 0.85s cubic-bezier(0.22, 1.32, 0.4, 1), opacity 0.6s ease;
+    opacity: 0;
+  }
+  #cameo.cameo-active {
+    transform: translate(0%, -50%);
+    opacity: 1;
+    transition: transform 0.7s cubic-bezier(0.34, 1.4, 0.5, 1), opacity 0.5s ease;
+  }
+
+  .btn-focus:focus-visible {
+    outline: 3px solid #0a0a08;
+    outline-offset: 3px;
+  }
+  .btn-focus-inv:focus-visible {
+    outline: 3px solid #d3ff08;
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #cameo { display: none; }
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+
+  .tracking-tightest { letter-spacing: -0.03em; }
+</style>
+</head>
+
+<body class="relative w-full font-body text-ink">
+
+  <!-- Background video + tint -->
+  <video
+    id="bgVideo"
+    class="fixed inset-0 w-full h-full object-cover opacity-[0.62] pointer-events-none select-none"
+    autoplay muted loop playsinline
+  >
+    <source src="roi-intro-nooutro.mp4" type="video/mp4" />
+  </video>
+  <div class="fixed inset-0 bg-lime mix-blend-color pointer-events-none" aria-hidden="true"></div>
+  <div class="fixed inset-0 bg-vignette pointer-events-none" aria-hidden="true"></div>
+
+  <!-- Gate modal -->
+  <div id="gateModal" class="fixed inset-0 z-50 flex items-center justify-center bg-ink/85 backdrop-blur-sm px-6" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+    <div id="gateCard" class="relative w-full max-w-md rounded-28 border-2 border-lime bg-ink px-7 py-9 sm:px-9 sm:py-10 text-center shadow-elevated">
+
+      <div id="gateStepQuestion">
+        <p class="font-mono text-[11px] tracking-[0.25em] text-lime/60 uppercase mb-4">System Prompt</p>
+        <h2 id="gateTitle" class="font-display font-black text-lime text-xl sm:text-2xl leading-snug tracking-tightest uppercase">
+          Would you like to make a<br /><span class="text-white">retarded online investment?</span>
+        </h2>
+        <div class="mt-8 flex flex-col gap-3">
+          <button id="gateYes" type="button" class="btn-focus w-full rounded-full bg-lime text-ink font-display font-extrabold text-sm sm:text-base uppercase tracking-wide py-3.5 transition-transform duration-200 ease-out hover:-translate-y-0.5 hover:bg-lime active:translate-y-0 active:scale-[0.98]">
+            Yes, let's go 🚀
+          </button>
+          <button id="gateNo" type="button" class="btn-focus-inv w-full rounded-full border-2 border-lime/70 text-lime font-display font-bold text-sm sm:text-base uppercase tracking-wide py-3.5 transition-colors duration-200 ease-out hover:bg-lime/10 active:scale-[0.98]">
+            No, I value my money
+          </button>
+        </div>
+      </div>
+
+      <div id="gateStepJoke" class="hidden">
+        <p class="font-mono text-[11px] tracking-[0.25em] text-lime/60 uppercase mb-4">Risk Assessment: Complete</p>
+        <h2 class="font-display font-black text-white text-xl sm:text-2xl leading-snug tracking-tightest uppercase">
+          Smart. Responsible.<br /><span class="text-lime">Boring.</span>
+        </h2>
+        <p class="mt-4 text-sm text-lime/70 leading-relaxed">
+          Statistically the correct answer. Diamond hands were never built on good decisions, though. The door's still open.
+        </p>
+        <button id="gateEnterAnyway" type="button" class="btn-focus mt-7 w-full rounded-full bg-lime text-ink font-display font-extrabold text-sm sm:text-base uppercase tracking-wide py-3.5 transition-transform duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]">
+          ...fine, take my money 🤝
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Page -->
+  <main id="page" class="relative z-10 flex flex-col items-center w-full text-center px-6" style="height:100dvh; padding-top: clamp(1.25rem, 4vh, 2.5rem); padding-bottom: clamp(1rem, 3vh, 2rem);">
+
+    <!-- Header + CA cluster (centered together in the available space) -->
+    <div class="flex-1 flex flex-col items-center justify-center w-full min-h-0" style="gap: clamp(1.5rem, 4vh, 3rem);">
+
+      <!-- Header -->
+      <header class="flex flex-col items-center" style="gap: clamp(0.6rem, 1.6vh, 1.1rem);">
+        <img
+          src="roi-pfp-trans.png"
+          alt="ROI logo"
+          class="w-auto shadow-floating"
+          style="height: clamp(64px, 13vh, 128px);"
+        />
+        <h1 class="font-display font-black text-black uppercase leading-[0.95] tracking-tightest" style="font-size: clamp(1.5rem, 2.4vw + 1.6vh, 2.75rem);">
+          Retarded Online Investment
+        </h1>
+        <p class="font-mono text-black/60 text-xs sm:text-sm tracking-[0.3em] uppercase">$ROI · No brain cells required</p>
+      </header>
+
+      <!-- CA -->
+      <section class="w-full">
+        <div class="w-full mx-auto" style="max-width: clamp(300px, 42vw, 560px);">
+          <p class="font-mono text-black/70 text-[11px] sm:text-xs tracking-[0.3em] uppercase mb-2.5">Contract Address</p>
+          <button
+            id="caBox"
+            type="button"
+            class="btn-focus-inv group relative w-full rounded-2xl border-2 border-ink bg-ink text-lime shadow-elevated px-4 sm:px-5 py-4 flex items-center justify-between gap-3 transition-transform duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99]"
+            aria-label="Copy contract address"
+          >
+            <span id="caText" class="font-mono text-[12px] sm:text-sm truncate text-left">robinhood-robinhood-robinhood</span>
+            <span id="caIcon" class="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-lime text-ink font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wide px-3 py-1.5 transition-colors">
+              <svg id="caIconSvg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span id="caLabel">Copy</span>
+            </span>
+          </button>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full flex flex-col items-center" style="gap: clamp(0.6rem, 1.6vh, 1rem);">
+      <p class="text-black/70 text-[10px] sm:text-xs leading-relaxed max-w-xl mx-auto" style="line-height:1.7;">
+        <strong class="text-black">⚠ Risk disclosure:</strong> $ROI is a memecoin with no intrinsic value, no roadmap, and no formal team. It exists purely for entertainment. Crypto assets are volatile and you may lose everything you put in. Do your own research and never invest more than you can afford to lose.
+      </p>
+      <div class="h-px w-24 bg-black/20"></div>
+      <div class="flex items-center gap-6 font-mono text-xs sm:text-sm uppercase tracking-wide">
+        <a href="https://x.com/ROI_Robinhood" target="_blank" rel="noopener noreferrer" class="btn-focus-inv group flex items-center gap-2 text-black/80 hover:text-black transition-colors duration-200 rounded-md px-1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-7.6 8.7L23.3 22h-7l-5.5-7.2L4.5 22H1.4l8.1-9.3L1 2h7.2l5 6.6L18.9 2Zm-1.2 18h1.7L7.4 3.9H5.6L17.7 20Z"/></svg>
+          <span>X</span>
+        </a>
+        <span class="text-black/20">/</span>
+        <a href="https://t.me/ROI_Portal" target="_blank" rel="noopener noreferrer" class="btn-focus-inv group flex items-center gap-2 text-black/80 hover:text-black transition-colors duration-200 rounded-md px-1">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.6 20c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-4.9L18 6.7c.5-.4-.1-.6-.7-.2L7 13.4l-4.8-1.5c-1-.3-1-1 .2-1.5L20.5 3.3c.9-.3 1.7.2 1.4 1Z"/></svg>
+          <span>Telegram</span>
+        </a>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Cameo: NICE GAINS -->
+  <div id="cameo" class="fixed z-20 flex items-end pointer-events-none select-none" style="right: 0; top: 60%; gap: clamp(0.3rem, 0.8vw, 0.6rem);">
+    <span class="font-display font-black text-black uppercase leading-[0.9] text-right tracking-tightest mb-9" style="font-size: clamp(1.1rem, 2.2vw, 1.8rem);">
+      NICE<br />GAINS
+    </span>
+    <div
+      style="
+        height: clamp(150px, 24vh, 260px);
+        width: clamp(96px, 15.4vh, 166px);
+        background-image: url('roi-trans-thumbsup.png');
+        background-size: auto 100%;
+        background-position: right center;
+        background-repeat: no-repeat;
+        filter: drop-shadow(0 14px 18px rgba(0,0,0,0.45)) drop-shadow(0 4px 8px rgba(0,0,0,0.35));
+      "
+    ></div>
+  </div>
+
+<script>
+  // ---- Gate modal logic ----
+  const modal = document.getElementById('gateModal');
+  const stepQuestion = document.getElementById('gateStepQuestion');
+  const stepJoke = document.getElementById('gateStepJoke');
+  const yesBtn = document.getElementById('gateYes');
+  const noBtn = document.getElementById('gateNo');
+  const enterAnywayBtn = document.getElementById('gateEnterAnyway');
+  const video = document.getElementById('bgVideo');
+
+  function closeGate() {
+    modal.style.transition = 'opacity 0.45s ease';
+    modal.style.opacity = '0';
+    setTimeout(() => { modal.style.display = 'none'; }, 450);
+    video.play().catch(() => {});
+    startCameoLoop();
+  }
+
+  yesBtn.addEventListener('click', closeGate);
+  enterAnywayBtn.addEventListener('click', closeGate);
+  noBtn.addEventListener('click', () => {
+    stepQuestion.classList.add('hidden');
+    stepJoke.classList.remove('hidden');
+  });
+
+  // ---- Copy contract address ----
+  const caBox = document.getElementById('caBox');
+  const caText = document.getElementById('caText');
+  const caLabel = document.getElementById('caLabel');
+  const caIconSvg = document.getElementById('caIconSvg');
+
+  const checkIcon = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  const copyIconMarkup = caIconSvg.outerHTML;
+
+  caBox.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(caText.textContent.trim());
+    } catch (e) {
+      const range = document.createRange();
+      range.selectNode(caText);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+      document.execCommand('copy');
+      window.getSelection().removeAllRanges();
+    }
+    caLabel.textContent = 'Copied';
+    document.getElementById('caIconSvg').outerHTML = checkIcon;
+    setTimeout(() => {
+      caLabel.textContent = 'Copy';
+      const svgNode = document.getElementById('caIconSvg') || caBox.querySelector('svg');
+      svgNode.outerHTML = copyIconMarkup;
+    }, 1500);
+  });
+
+  // ---- Cameo peek loop ----
+  const cameo = document.getElementById('cameo');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let cameoTimer = null;
+
+  function runCameoOnce() {
+    cameo.classList.add('cameo-active');
+    setTimeout(() => cameo.classList.remove('cameo-active'), 2400);
+  }
+
+  function startCameoLoop() {
+    if (reduceMotion || cameoTimer) return;
+    setTimeout(runCameoOnce, 2600);
+    cameoTimer = setInterval(runCameoOnce, 9000);
+  }
+</script>
+
+</body>
+</html>
