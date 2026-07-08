@@ -1,0 +1,997 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+<title>Bagholder Runner — $ROI Arcade</title>
+<link rel="icon" href="../roi-pfp-trans.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg: #180e1c;
+    --panel: #241528;
+    --cash: #34d399;
+    --cash-dim: #1c8f66;
+    --red: #ff4757;
+    --amber: #ffb020;
+    --ink: #0a0a08;
+    --lime: #d3ff08;
+    --paper: #efe6cf;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--ink);
+    overflow: hidden;
+    overscroll-behavior: none;
+    font-family: 'Inter', sans-serif;
+    color: #fff2e8;
+  }
+
+  .shell {
+    height: 100dvh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.6rem, 2vh, 1.1rem);
+    padding: clamp(0.75rem, 2vh, 1.5rem) clamp(0.75rem, 3vw, 1.5rem);
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(255,71,87,0.08), transparent 60%),
+      var(--ink);
+  }
+
+  .topbar {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(211,255,8,0.65);
+    text-decoration: none;
+    border: 2px solid rgba(211,255,8,0.25);
+    border-radius: 999px;
+    padding: 0.5rem 0.9rem;
+    transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+  .back-link:hover { color: var(--lime); border-color: rgba(211,255,8,0.7); transform: translateY(-1px); }
+  .back-link:focus-visible { outline: 3px solid var(--lime); outline-offset: 3px; }
+  .back-link:active { transform: translateY(0); }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: var(--cash);
+  }
+  .brand img { height: 22px; width: auto; }
+
+  .canvas-wrap {
+    position: relative;
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 960px;
+    aspect-ratio: 16 / 9;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 2px solid rgba(52,211,153,0.35);
+    box-shadow:
+      0 1px 2px rgba(0,0,0,0.6),
+      0 20px 44px -12px rgba(0,0,0,0.7),
+      0 0 60px -18px rgba(255,71,87,0.28);
+    background: var(--bg);
+    touch-action: none;
+  }
+
+  #game {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.5rem;
+    overflow-y: auto;
+    background: rgba(14, 8, 16, 0.9);
+    backdrop-filter: blur(4px);
+    transition: opacity 0.35s ease;
+  }
+  .overlay.hidden { display: none; }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(52,211,153,0.6);
+    margin-bottom: 0.9rem;
+  }
+
+  .title-xl {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.03em;
+    line-height: 0.95;
+    font-size: clamp(1.7rem, 6vw, 3.1rem);
+    color: var(--cash);
+    text-shadow: 0 0 26px rgba(52,211,153,0.4);
+    margin: 0;
+  }
+  .title-xl.danger { color: var(--red); text-shadow: 0 0 26px rgba(255,71,87,0.5); }
+
+  .subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(0.85rem, 2vw, 1.05rem);
+    color: rgba(255,242,232,0.72);
+    margin-top: 0.75rem;
+    max-width: 30rem;
+    line-height: 1.6;
+  }
+
+  .stat-row {
+    display: flex;
+    gap: 1.75rem;
+    margin-top: 1.1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+  }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,242,232,0.45);
+  }
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    color: #fff;
+  }
+
+  .insult {
+    font-family: 'Inter', sans-serif;
+    font-style: italic;
+    font-size: 0.9rem;
+    color: rgba(255,176,32,0.9);
+    margin-top: 0.9rem;
+    max-width: 26rem;
+  }
+
+  .cta {
+    margin-top: 1.75rem;
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    font-size: clamp(0.85rem, 2vw, 1rem);
+    color: var(--ink);
+    background: var(--cash);
+    border: none;
+    border-radius: 999px;
+    padding: 0.95rem 2.2rem;
+    cursor: pointer;
+    box-shadow: 0 10px 24px -8px rgba(52,211,153,0.55);
+    transition: transform 0.2s cubic-bezier(0.34,1.4,0.5,1), box-shadow 0.2s ease;
+  }
+  .cta:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 30px -8px rgba(52,211,153,0.7); }
+  .cta:active { transform: translateY(0) scale(0.97); }
+  .cta:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+  .hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(211,255,8,0.4);
+    text-align: center;
+  }
+  .hint kbd {
+    font-family: inherit;
+    background: rgba(211,255,8,0.1);
+    border: 1px solid rgba(211,255,8,0.3);
+    border-radius: 5px;
+    padding: 0.1rem 0.4rem;
+    color: rgba(211,255,8,0.8);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="shell">
+    <div class="topbar">
+      <a href="../games.html" class="back-link">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>Arcade</span>
+      </a>
+      <div class="brand">
+        <img src="../roi-pfp-trans.png" alt="ROI" />
+        <span>Bagholder Runner</span>
+      </div>
+    </div>
+
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="game"></canvas>
+    </div>
+
+    <p class="hint">Jump to clear obstacles · Fewer than 3 bags lets you double-jump</p>
+  </div>
+
+  <!-- Start screen -->
+  <div id="startScreen" class="overlay">
+    <p class="eyebrow">$ROI Arcade · Infinite Runner</p>
+    <h1 class="title-xl">Bagholder Runner</h1>
+    <p class="subtitle">The more you buy, the harder it gets to run. Every coin is another bag on your back — and the debt collectors never stop chasing.</p>
+    <button id="startBtn" class="cta">Start Running</button>
+    <p class="hint" style="margin-top:1.4rem;">Press <kbd>Space</kbd> / <kbd>Click</kbd> / <kbd>Touch</kbd> to jump</p>
+  </div>
+
+  <!-- Game over screen -->
+  <div id="gameOverScreen" class="overlay hidden">
+    <p class="eyebrow" id="reasonText">Case closed</p>
+    <h1 class="title-xl danger">Bankrupt!</h1>
+    <div class="stat-row">
+      <div class="stat">
+        <span class="stat-label">Days Survived</span>
+        <span class="stat-value" id="finalDays">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Max Bags Held</span>
+        <span class="stat-value" id="finalBags">0</span>
+      </div>
+    </div>
+    <p class="insult" id="insultText"></p>
+    <button id="restartBtn" class="cta">Restructure Debt</button>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------------------------------------------------------------------
+  // Canvas + responsive setup
+  // ---------------------------------------------------------------------
+  const GAME_W = 960;
+  const GAME_H = 540;
+
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const wrap = document.getElementById('canvasWrap');
+  const shell = document.querySelector('.shell');
+  const topbar = document.querySelector('.topbar');
+  const hint = document.querySelector('.hint');
+
+  function layoutWrap() {
+    wrap.style.width = '';
+    wrap.style.height = '';
+
+    const shellStyle = getComputedStyle(shell);
+    const padX = parseFloat(shellStyle.paddingLeft) + parseFloat(shellStyle.paddingRight);
+    const padY = parseFloat(shellStyle.paddingTop) + parseFloat(shellStyle.paddingBottom);
+    const gap = parseFloat(shellStyle.rowGap) || 0;
+
+    const shellRect = shell.getBoundingClientRect();
+    const topbarH = topbar.getBoundingClientRect().height;
+    const hintH = hint.getBoundingClientRect().height;
+
+    const availW = Math.max(160, shellRect.width - padX);
+    const availH = Math.max(140, shellRect.height - padY - topbarH - hintH - gap * 2);
+
+    let w = Math.min(availW, 960);
+    let h = w * 9 / 16;
+    if (h > availH) {
+      h = availH;
+      w = h * 16 / 9;
+    }
+
+    wrap.style.width = w + 'px';
+    wrap.style.height = h + 'px';
+
+    resizeCanvas();
+  }
+
+  function resizeCanvas() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = wrap.getBoundingClientRect();
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    const scale = (canvas.width / GAME_W);
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  }
+  window.addEventListener('resize', layoutWrap);
+  layoutWrap();
+
+  // ---------------------------------------------------------------------
+  // Constants
+  // ---------------------------------------------------------------------
+  const GROUND_Y = GAME_H - 96;
+  const PLAYER_X = GAME_W * 0.22;
+  const PLAYER_W = 30;
+  const PLAYER_H = 54;
+
+  const BASE_GRAVITY = 2200;
+  const BASE_JUMP_VEL = -760;
+  const MAX_BAGS_FOR_PHYSICS = 11;
+
+  const BASE_RUN_SPEED = 300;
+  const MIN_RUN_SPEED = 120;
+  const COLLECTOR_BASE_SPEED = 245;
+  const GAP_START = 190;
+  const GAP_MAX = 260;
+
+  const insultTiers = [
+    { max: 1, text: 'Zero bags? Coward. Or genius. Hard to tell.' },
+    { max: 4, text: 'A modest bagholder. Diversified into regret.' },
+    { max: 8, text: 'Certified bagholder. Your shoulders will never recover.' },
+    { max: 14, text: 'You held the bag all the way to a cardboard box!' },
+    { max: Infinity, text: 'Sir, this is a bankruptcy court, not a gym.' },
+  ];
+  function insultFor(maxBags) {
+    for (const tier of insultTiers) if (maxBags <= tier.max) return tier.text;
+    return insultTiers[insultTiers.length - 1].text;
+  }
+
+  const REASONS = {
+    caught: 'Caught by the debt collectors',
+    pitfall: 'Swallowed by a pothole of your own debt',
+    collision: 'Buried under paperwork',
+  };
+
+  const TICKERS = ['-4.2%', 'SELL', '-12.8%', 'MARGIN CALL', '-0.9%', 'REKT', '-31%', 'HOLD?'];
+
+  // ---------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------
+  let state = 'start';
+  let lastTime = 0;
+  let elapsed = 0;
+
+  let player, obstacles, tickers, buildings;
+  let bags, maxBags, jumpsUsed, canDoubleJump;
+  let runSpeed, collectorGap, difficultyTimer;
+  let spawnTimer, spawnInterval;
+  let daysScore, comboMultiplier, comboTimer;
+  let invincible, invincibleTimer, shakeTime, flashTime;
+  let deathReason = 'collision';
+  let legPhase = 0;
+
+  function resetGame() {
+    player = { x: PLAYER_X, y: GROUND_Y - PLAYER_H, vy: 0, falling: false };
+    obstacles = [];
+    tickers = [];
+    for (let i = 0; i < 10; i++) {
+      tickers.push({
+        x: Math.random() * GAME_W,
+        y: Math.random() * GAME_H * 0.6,
+        speed: 30 + Math.random() * 40,
+        text: TICKERS[Math.floor(Math.random() * TICKERS.length)],
+      });
+    }
+    buildings = [];
+    let bx = 0;
+    while (bx < GAME_W + 200) {
+      const w = 60 + Math.random() * 70;
+      buildings.push({ x: bx, w, h: 70 + Math.random() * 130 });
+      bx += w + 14;
+    }
+
+    bags = 0;
+    maxBags = 0;
+    jumpsUsed = 0;
+    runSpeed = BASE_RUN_SPEED;
+    collectorGap = GAP_START;
+    difficultyTimer = 0;
+    spawnTimer = 1.1;
+    spawnInterval = 1.4;
+    daysScore = 0;
+    comboMultiplier = 1;
+    comboTimer = 0;
+    invincible = false;
+    invincibleTimer = 0;
+    shakeTime = 0;
+    flashTime = 0;
+    elapsed = 0;
+    legPhase = 0;
+  }
+
+  // ---------------------------------------------------------------------
+  // Input
+  // ---------------------------------------------------------------------
+  function tryJump() {
+    if (state === 'start') { startGame(); return; }
+    if (state !== 'playing' || player.falling) return;
+    const onGround = player.y >= GROUND_Y - PLAYER_H - 0.5;
+    const maxJumps = bags < 3 ? 2 : 1;
+    if (onGround) {
+      player.vy = jumpVel();
+      jumpsUsed = 1;
+    } else if (jumpsUsed < maxJumps) {
+      player.vy = jumpVel() * 0.85;
+      jumpsUsed++;
+    }
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') { e.preventDefault(); tryJump(); }
+  });
+  wrap.addEventListener('mousedown', tryJump);
+  wrap.addEventListener('touchstart', (e) => { e.preventDefault(); tryJump(); }, { passive: false });
+
+  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('restartBtn').addEventListener('click', startGame);
+
+  function startGame() {
+    resetGame();
+    state = 'playing';
+    document.getElementById('startScreen').classList.add('hidden');
+    document.getElementById('gameOverScreen').classList.add('hidden');
+  }
+
+  function endGame(reason) {
+    if (state !== 'playing') return;
+    state = 'gameover';
+    deathReason = reason;
+    shakeTime = 0.35;
+    flashTime = 0.35;
+    setTimeout(showGameOverScreen, 320);
+  }
+
+  function showGameOverScreen() {
+    document.getElementById('reasonText').textContent = REASONS[deathReason] || 'Case closed';
+    document.getElementById('finalDays').textContent = Math.floor(daysScore);
+    document.getElementById('finalBags').textContent = maxBags;
+    document.getElementById('insultText').textContent = insultFor(maxBags);
+    document.getElementById('gameOverScreen').classList.remove('hidden');
+  }
+
+  // ---------------------------------------------------------------------
+  // Physics helpers
+  // ---------------------------------------------------------------------
+  function jumpVel() {
+    const b = Math.min(bags, MAX_BAGS_FOR_PHYSICS);
+    return BASE_JUMP_VEL + b * 42;
+  }
+  function gravity() {
+    const b = Math.min(bags, MAX_BAGS_FOR_PHYSICS);
+    return BASE_GRAVITY + b * 65;
+  }
+  function computeRunSpeed() {
+    const b = Math.min(bags, 12);
+    return Math.max(MIN_RUN_SPEED, BASE_RUN_SPEED - b * 14);
+  }
+
+  // ---------------------------------------------------------------------
+  // Spawning
+  // ---------------------------------------------------------------------
+  function spawnEntity() {
+    const roll = Math.random();
+    if (roll < 0.34) {
+      spawnCoin();
+    } else if (roll < 0.40) {
+      spawnBankruptcyStamp();
+    } else if (roll < 0.48) {
+      spawnStimulus();
+    } else {
+      const typeRoll = Math.random();
+      if (typeRoll < 0.34) spawnIRS();
+      else if (typeRoll < 0.62) spawnBills();
+      else if (typeRoll < 0.85) spawnEviction();
+      else spawnPitfall();
+    }
+  }
+
+  function spawnCoin() {
+    const y = GROUND_Y - 60 - Math.random() * 160;
+    obstacles.push({ type: 'coin', x: GAME_W + 20, y, r: 13, bob: Math.random() * 10 });
+  }
+  function spawnBankruptcyStamp() {
+    const y = GROUND_Y - 90 - Math.random() * 90;
+    obstacles.push({ type: 'stamp', x: GAME_W + 20, y, r: 16, bob: Math.random() * 10 });
+  }
+  function spawnStimulus() {
+    const y = GROUND_Y - 90 - Math.random() * 90;
+    obstacles.push({ type: 'stimulus', x: GAME_W + 20, y, r: 16, bob: Math.random() * 10 });
+  }
+  function spawnIRS() {
+    obstacles.push({ type: 'irs', x: GAME_W + 40, w: 34, h: 58, passed: false });
+  }
+  function spawnBills() {
+    obstacles.push({ type: 'bills', x: GAME_W + 40, w: 46, h: 24, passed: false });
+  }
+  function spawnEviction() {
+    const low = Math.random() < 0.62;
+    const y = low ? GROUND_Y - 76 : GROUND_Y - 150;
+    obstacles.push({ type: 'eviction', x: GAME_W + 40, y, w: 36, h: 24, low, passed: false });
+  }
+  function spawnPitfall() {
+    const w = 70 + Math.min(70, difficultyTimer * 1.4) + Math.random() * 30;
+    obstacles.push({ type: 'pit', x: GAME_W + w, w, passed: false });
+  }
+
+  // ---------------------------------------------------------------------
+  // Update
+  // ---------------------------------------------------------------------
+  function update(dt) {
+    elapsed += dt;
+    difficultyTimer += dt;
+
+    runSpeed = computeRunSpeed();
+    let effRunSpeed = runSpeed;
+    let collectorSpeed = COLLECTOR_BASE_SPEED + difficultyTimer * 0.6;
+
+    if (invincible) {
+      invincibleTimer -= dt;
+      effRunSpeed += 160;
+      if (invincibleTimer <= 0) invincible = false;
+    }
+
+    // debt collector gap
+    collectorGap -= (collectorSpeed - effRunSpeed) * dt;
+    collectorGap = Math.min(GAP_MAX, collectorGap);
+    if (collectorGap <= 0) { collectorGap = 0; endGame('caught'); }
+
+    // combo decay
+    if (comboTimer > 0) {
+      comboTimer -= dt;
+      if (comboTimer <= 0) comboMultiplier = 1;
+    }
+
+    // score
+    daysScore += 6 * comboMultiplier * dt;
+
+    // player physics
+    const onGroundBefore = player.y >= GROUND_Y - PLAYER_H - 0.5;
+    if (!player.falling) {
+      player.vy += gravity() * dt;
+      player.y += player.vy * dt;
+      if (player.y >= GROUND_Y - PLAYER_H) {
+        player.y = GROUND_Y - PLAYER_H;
+        player.vy = 0;
+        jumpsUsed = 0;
+      }
+    } else {
+      player.vy += BASE_GRAVITY * 1.4 * dt;
+      player.y += player.vy * dt;
+      if (player.y > GAME_H + 80) endGame('pitfall');
+    }
+
+    const isAirborne = player.y < GROUND_Y - PLAYER_H - 0.5;
+    legPhase += dt * (isAirborne ? 0 : (4 + effRunSpeed / 60));
+
+    // background
+    buildings.forEach((b) => { b.x -= effRunSpeed * 0.35 * dt; });
+    if (buildings.length && buildings[0].x + buildings[0].w < -20) {
+      const last = buildings[buildings.length - 1];
+      buildings.shift();
+      buildings.push({ x: last.x + last.w + 14, w: 60 + Math.random() * 70, h: 70 + Math.random() * 130 });
+    }
+    tickers.forEach((t) => {
+      t.y += t.speed * dt;
+      t.x -= 20 * dt;
+      if (t.y > GAME_H) { t.y = -20; t.x = Math.random() * GAME_W; t.text = TICKERS[Math.floor(Math.random() * TICKERS.length)]; }
+    });
+
+    // spawn
+    spawnInterval = Math.max(0.75, 1.4 - difficultyTimer * 0.015);
+    spawnTimer -= dt;
+    if (spawnTimer <= 0 && state === 'playing' && !player.falling) {
+      spawnEntity();
+      spawnTimer = spawnInterval + Math.random() * 0.5;
+    }
+
+    // obstacles
+    obstacles.forEach((o) => { o.x -= effRunSpeed * dt; });
+    obstacles = obstacles.filter((o) => o.x > -100);
+
+    obstacles.forEach((o) => {
+      if (o.collected || player.falling) return;
+
+      if (o.type === 'coin' || o.type === 'stamp' || o.type === 'stimulus') {
+        const cx = o.x, cy = o.y + Math.sin(elapsed * 3 + o.bob) * 5;
+        const dx = cx - (player.x + PLAYER_W / 2);
+        const dy = cy - (player.y + PLAYER_H / 2);
+        if (Math.sqrt(dx * dx + dy * dy) < o.r + 16) {
+          o.collected = true;
+          if (o.type === 'coin') collectCoin();
+          else if (o.type === 'stamp') fileBankruptcy();
+          else stimulusCheck();
+        }
+        return;
+      }
+
+      if (o.type === 'pit') {
+        const withinX = player.x + PLAYER_W > o.x - o.w / 2 && player.x < o.x + o.w / 2;
+        const grounded = player.y >= GROUND_Y - PLAYER_H - 6;
+        if (withinX && grounded && !invincible) {
+          player.falling = true;
+          player.vy = 60;
+        }
+        return;
+      }
+
+      // solid obstacles: irs, bills, eviction(low)
+      if (o.type === 'irs' || o.type === 'bills' || o.type === 'eviction') {
+        const oy = o.type === 'eviction' ? o.y : GROUND_Y - o.h;
+        const ox = o.x - o.w / 2;
+        const hit = player.x + PLAYER_W > ox && player.x < ox + o.w &&
+                    player.y + PLAYER_H > oy && player.y < oy + o.h;
+        if (hit) {
+          if (invincible) { o.x = -999; }
+          else endGame('collision');
+        }
+      }
+    });
+    obstacles = obstacles.filter((o) => !o.collected);
+  }
+
+  function collectCoin() {
+    bags++;
+    maxBags = Math.max(maxBags, bags);
+    comboMultiplier = Math.min(4, comboMultiplier + 0.4);
+    comboTimer = 2.6;
+  }
+  function fileBankruptcy() {
+    bags = 0;
+    comboMultiplier = 1;
+    comboTimer = 0;
+    flashTime = Math.max(flashTime, 0.18);
+  }
+  function stimulusCheck() {
+    invincible = true;
+    invincibleTimer = 3;
+  }
+
+  // ---------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------
+  function draw() {
+    ctx.save();
+    if (shakeTime > 0) {
+      const mag = 6 * (shakeTime / 0.35);
+      ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
+    }
+
+    drawSky();
+    drawBuildings();
+    drawTickers();
+    drawGround();
+
+    obstacles.forEach(drawObstacle);
+    drawCollector();
+    drawPlayer();
+
+    if (flashTime > 0) {
+      ctx.fillStyle = `rgba(255,71,87,${(flashTime / 0.35) * 0.3})`;
+      ctx.fillRect(-10, -10, GAME_W + 20, GAME_H + 20);
+    }
+    ctx.restore();
+
+    drawHUD();
+  }
+
+  function drawSky() {
+    const grad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+    grad.addColorStop(0, '#1b1024');
+    grad.addColorStop(1, '#3a1220');
+    ctx.fillStyle = grad;
+    ctx.fillRect(-10, -10, GAME_W + 20, GROUND_Y + 10);
+  }
+
+  function drawBuildings() {
+    buildings.forEach((b) => {
+      ctx.fillStyle = 'rgba(36,21,40,0.9)';
+      ctx.fillRect(b.x, GROUND_Y - b.h, b.w, b.h);
+      ctx.fillStyle = 'rgba(255,176,32,0.18)';
+      for (let wy = GROUND_Y - b.h + 12; wy < GROUND_Y - 10; wy += 18) {
+        for (let wx = b.x + 8; wx < b.x + b.w - 8; wx += 16) {
+          if ((wx + wy) % 37 < 20) ctx.fillRect(wx, wy, 6, 8);
+        }
+      }
+    });
+  }
+
+  function drawTickers() {
+    ctx.font = '700 12px "JetBrains Mono", monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    tickers.forEach((t) => {
+      ctx.fillStyle = 'rgba(255,71,87,0.35)';
+      ctx.fillText(t.text, t.x, t.y);
+    });
+  }
+
+  function drawGround() {
+    ctx.fillStyle = '#14080f';
+    ctx.fillRect(-10, GROUND_Y, GAME_W + 20, GAME_H - GROUND_Y + 10);
+    ctx.strokeStyle = 'rgba(255,242,232,0.12)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, GROUND_Y); ctx.lineTo(GAME_W, GROUND_Y); ctx.stroke();
+
+    // pit gaps drawn as part of ground pass (dark void)
+    obstacles.forEach((o) => {
+      if (o.type !== 'pit') return;
+      ctx.fillStyle = '#050208';
+      ctx.fillRect(o.x - o.w / 2, GROUND_Y, o.w, GAME_H - GROUND_Y + 10);
+      ctx.strokeStyle = 'rgba(255,71,87,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(o.x - o.w / 2, GROUND_Y); ctx.lineTo(o.x + o.w / 2, GROUND_Y); ctx.stroke();
+    });
+  }
+
+  function drawCollector() {
+    const cx = PLAYER_X - collectorGap;
+    if (cx < -60) return;
+    const bob = Math.sin(elapsed * 8) * 3;
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath();
+    ctx.ellipse(cx, GROUND_Y - 34 + bob, 22, 40, 0, 0, Math.PI * 2);
+    const grad = ctx.createRadialGradient(cx, GROUND_Y - 34, 4, cx, GROUND_Y - 34, 42);
+    grad.addColorStop(0, 'rgba(60,10,20,0.95)');
+    grad.addColorStop(1, 'rgba(10,4,8,0.85)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    // eyes
+    ctx.fillStyle = '#ff4757';
+    ctx.shadowColor = 'rgba(255,71,87,0.9)';
+    ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(cx - 7, GROUND_Y - 42 + bob, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 7, GROUND_Y - 42 + bob, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  function drawPlayer() {
+    const x = player.x, y = player.y;
+    const isAirborne = player.y < GROUND_Y - PLAYER_H - 0.5;
+    const swing = isAirborne ? 0.3 : Math.sin(legPhase) * 0.5;
+
+    ctx.save();
+    if (invincible) {
+      ctx.shadowColor = 'rgba(52,211,153,0.9)';
+      ctx.shadowBlur = 18;
+    }
+
+    // legs
+    ctx.strokeStyle = '#20161a';
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x + PLAYER_W * 0.35, y + PLAYER_H * 0.62);
+    ctx.lineTo(x + PLAYER_W * 0.35 + swing * 10, y + PLAYER_H);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + PLAYER_W * 0.65, y + PLAYER_H * 0.62);
+    ctx.lineTo(x + PLAYER_W * 0.65 - swing * 10, y + PLAYER_H);
+    ctx.stroke();
+
+    // torso (suit)
+    ctx.fillStyle = '#2b3a55';
+    roundRect(x + 4, y + PLAYER_H * 0.28, PLAYER_W - 8, PLAYER_H * 0.4, 5);
+    ctx.fill();
+    // tie
+    ctx.fillStyle = '#ff4757';
+    ctx.fillRect(x + PLAYER_W / 2 - 2, y + PLAYER_H * 0.3, 4, PLAYER_H * 0.24);
+    // head
+    ctx.fillStyle = '#f2c9a0';
+    ctx.beginPath();
+    ctx.arc(x + PLAYER_W / 2, y + PLAYER_H * 0.16, PLAYER_H * 0.14, 0, Math.PI * 2);
+    ctx.fill();
+
+    // bags stacked on back/shoulders
+    const bagCount = Math.min(bags, 9);
+    for (let i = 0; i < bagCount; i++) {
+      const angle = (i % 2 === 0 ? -1 : 1) * (4 + (i % 3) * 3);
+      const stackY = y + PLAYER_H * 0.22 - i * 6.5;
+      ctx.save();
+      ctx.translate(x + PLAYER_W * 0.5 - 14, stackY);
+      ctx.rotate((angle * Math.PI) / 180);
+      ctx.fillStyle = i % 2 === 0 ? '#3a2a1c' : '#2f231a';
+      roundRect(0, 0, 20, 15, 3);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,176,32,0.85)';
+      ctx.font = '700 9px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('$', 10, 8);
+      ctx.restore();
+    }
+    if (bags > 9) {
+      ctx.fillStyle = 'rgba(255,71,87,0.9)';
+      ctx.font = '800 11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('+' + (bags - 9), x + PLAYER_W * 0.5 - 4, y - 12);
+    }
+
+    ctx.restore();
+  }
+
+  const POWER_STYLE = {
+    coin: { color: '#ffb020', glow: 'rgba(255,176,32,0.7)', emoji: '🪙' },
+    stamp: { color: '#34d399', glow: 'rgba(52,211,153,0.8)', emoji: '⚖️' },
+    stimulus: { color: '#5aa8ff', glow: 'rgba(90,168,255,0.8)', emoji: '💵' },
+  };
+
+  function drawObstacle(o) {
+    if (o.type === 'coin' || o.type === 'stamp' || o.type === 'stimulus') {
+      const style = POWER_STYLE[o.type];
+      const bob = Math.sin(elapsed * 3 + o.bob) * 5;
+      ctx.beginPath();
+      ctx.arc(o.x, o.y + bob, o.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(24,14,28,0.85)';
+      ctx.fill();
+      ctx.strokeStyle = style.color;
+      ctx.lineWidth = 2;
+      ctx.shadowColor = style.glow;
+      ctx.shadowBlur = o.type === 'coin' ? 8 : 14;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.font = (o.r + 2) + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(style.emoji, o.x, o.y + bob + 1);
+      return;
+    }
+
+    if (o.type === 'irs') {
+      ctx.fillStyle = '#1f2937';
+      roundRect(o.x - o.w / 2, GROUND_Y - o.h, o.w, o.h, 4);
+      ctx.fill();
+      ctx.fillStyle = '#f2c9a0';
+      ctx.beginPath(); ctx.arc(o.x, GROUND_Y - o.h - 8, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffb020';
+      ctx.font = '800 10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('IRS', o.x, GROUND_Y - o.h * 0.4);
+      return;
+    }
+
+    if (o.type === 'bills') {
+      ctx.fillStyle = '#efe6cf';
+      for (let i = 0; i < 4; i++) {
+        ctx.save();
+        ctx.translate(o.x - o.w / 2 + i * 10, GROUND_Y - o.h + (i % 2) * 3);
+        ctx.rotate(((i % 2 === 0 ? -1 : 1) * 6 * Math.PI) / 180);
+        ctx.fillStyle = i % 2 === 0 ? '#efe6cf' : '#d8c9a3';
+        ctx.fillRect(0, 0, 16, o.h - 4);
+        ctx.restore();
+      }
+      return;
+    }
+
+    if (o.type === 'eviction') {
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      ctx.rotate(Math.sin(elapsed * 4) * 0.15);
+      ctx.fillStyle = '#efe6cf';
+      roundRect(-o.w / 2, -o.h / 2, o.w, o.h, 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,71,87,0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,71,87,0.8)';
+      ctx.font = '700 8px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('EVICT', 0, 1);
+      ctx.restore();
+      return;
+    }
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawHUD() {
+    ctx.save();
+    const gradTop = ctx.createLinearGradient(0, 0, 0, 60);
+    gradTop.addColorStop(0, 'rgba(24,14,28,0.9)');
+    gradTop.addColorStop(1, 'rgba(24,14,28,0)');
+    ctx.fillStyle = gradTop;
+    ctx.fillRect(0, 0, GAME_W, 60);
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.font = '800 22px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#34d399';
+    ctx.shadowColor = 'rgba(52,211,153,0.7)';
+    ctx.shadowBlur = 8;
+    ctx.fillText('DAY ' + Math.floor(daysScore), 18, 34);
+    ctx.shadowBlur = 0;
+
+    ctx.textAlign = 'right';
+    ctx.font = '700 14px "JetBrains Mono", monospace';
+    ctx.fillStyle = bags >= 3 ? '#ff4757' : 'rgba(211,255,8,0.85)';
+    ctx.fillText('BAGS: ' + bags, GAME_W - 18, 26);
+    if (comboMultiplier > 1) {
+      ctx.fillStyle = '#ffb020';
+      ctx.font = '700 12px "JetBrains Mono", monospace';
+      ctx.fillText('COMBO ' + comboMultiplier.toFixed(1) + 'x', GAME_W - 18, 44);
+    }
+    if (invincible) {
+      ctx.fillStyle = '#5aa8ff';
+      ctx.font = '700 11px "JetBrains Mono", monospace';
+      ctx.fillText('STIMULUS ACTIVE', GAME_W - 18, invincible && comboMultiplier > 1 ? 60 : 44);
+    }
+    ctx.restore();
+  }
+
+  // ---------------------------------------------------------------------
+  // Main loop
+  // ---------------------------------------------------------------------
+  function frame(ts) {
+    if (!lastTime) lastTime = ts;
+    let dt = (ts - lastTime) / 1000;
+    dt = Math.min(dt, 0.033);
+    lastTime = ts;
+
+    if (state === 'playing') {
+      update(dt);
+    } else if (state === 'gameover') {
+      elapsed += dt;
+      if (shakeTime > 0) shakeTime = Math.max(0, shakeTime - dt);
+      if (flashTime > 0) flashTime = Math.max(0, flashTime - dt);
+    } else {
+      elapsed += dt;
+    }
+
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  resetGame();
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
