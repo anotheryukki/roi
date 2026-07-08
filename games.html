@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>$ROI Arcade — Games</title>
+<link rel="icon" href="roi-pfp-trans.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          lime: { DEFAULT: '#d3ff08', dim: '#b7e000' },
+          ink: { DEFAULT: '#0a0a08', 2: '#141410', 3: '#1c1c16' },
+          neon: { DEFAULT: '#00ff66' },
+        },
+        fontFamily: {
+          display: ['Unbounded', 'sans-serif'],
+          body: ['Inter', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+  html, body { margin: 0; background: #0a0a08; }
+  .tracking-tightest { letter-spacing: -0.03em; }
+
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(211,255,8,0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(211,255,8,0.06) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
+
+  .shadow-elevated {
+    box-shadow:
+      0 1px 2px rgba(0,0,0,0.5),
+      0 10px 24px -6px rgba(0,0,0,0.6),
+      0 4px 44px -10px rgba(211,255,8,0.12);
+  }
+  .shadow-elevated-neon {
+    box-shadow:
+      0 1px 2px rgba(0,0,0,0.6),
+      0 10px 28px -6px rgba(0,0,0,0.65),
+      0 4px 50px -8px rgba(0,255,102,0.18);
+  }
+
+  .btn-focus:focus-visible { outline: 3px solid #0a0a08; outline-offset: 3px; }
+  .btn-focus-inv:focus-visible { outline: 3px solid #d3ff08; outline-offset: 3px; }
+  .btn-focus-neon:focus-visible { outline: 3px solid #00ff66; outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+
+<body class="bg-grid font-body text-lime min-h-dvh w-full">
+
+  <div class="min-h-dvh w-full flex flex-col items-center px-6" style="padding-top: clamp(1.5rem, 5vh, 3rem); padding-bottom: clamp(1.5rem, 5vh, 3rem);">
+
+    <!-- Header -->
+    <header class="w-full flex items-center justify-between" style="max-width: 720px;">
+      <a href="index.html" class="btn-focus-inv group inline-flex items-center gap-2 rounded-full border-2 border-lime/30 text-lime/70 hover:text-lime hover:border-lime/70 font-mono text-[11px] uppercase tracking-wide px-3.5 py-2 transition-colors duration-200">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>Home</span>
+      </a>
+      <div class="flex items-center gap-2.5">
+        <img src="roi-pfp-trans.png" alt="ROI" class="h-7 w-auto" />
+        <span class="font-display font-black text-sm uppercase tracking-tightest text-lime">Arcade</span>
+      </div>
+    </header>
+
+    <!-- Intro -->
+    <div class="w-full text-center" style="max-width: 720px; margin-top: clamp(2rem, 7vh, 4rem);">
+      <p class="font-mono text-[11px] tracking-[0.3em] uppercase text-lime/50 mb-3">$ROI Presents</p>
+      <h1 class="font-display font-black uppercase tracking-tightest leading-[0.95]" style="font-size: clamp(2rem, 5vw, 3.25rem);">
+        Prove you have<br /><span class="text-white">zero risk management.</span>
+      </h1>
+    </div>
+
+    <!-- Game card -->
+    <div class="w-full" style="max-width: 640px; margin-top: clamp(2.5rem, 7vh, 4rem);">
+      <a
+        href="games/line-go-up.html"
+        class="btn-focus-neon group relative block rounded-[28px] border-2 border-neon/40 bg-ink-2 overflow-hidden shadow-elevated-neon transition-transform duration-200 ease-out hover:-translate-y-1 hover:border-neon/80 active:translate-y-0 active:scale-[0.99]"
+      >
+        <!-- mini chart preview -->
+        <div class="relative w-full" style="height: clamp(150px, 30vw, 220px); background: #0d1117;">
+          <canvas id="preview" class="absolute inset-0 w-full h-full"></canvas>
+          <div class="absolute inset-0 bg-gradient-to-t from-ink-2 via-transparent to-transparent"></div>
+          <span class="absolute top-4 left-4 font-mono text-[10px] uppercase tracking-[0.25em] text-neon/70">Live Preview</span>
+        </div>
+
+        <div class="p-6 sm:p-7 text-left">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h2 class="font-display font-black uppercase tracking-tightest text-neon" style="font-size: clamp(1.4rem, 3vw, 2rem); text-shadow: 0 0 18px rgba(0,255,102,0.35);">
+                Line Go Up
+              </h2>
+              <p class="font-body text-lime/60 text-sm mt-1.5 leading-relaxed">
+                Hold to pump. Let go to dump. Survive the market — or get liquidated trying.
+              </p>
+            </div>
+            <span class="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-neon text-ink font-mono text-xs font-bold uppercase tracking-wide px-4 py-2 mt-1 transition-transform duration-200 group-hover:translate-x-0.5">
+              Play
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </div>
+
+          <div class="flex items-center gap-4 mt-5 font-mono text-[10px] uppercase tracking-wide text-lime/40">
+            <span>Arcade · Endless</span>
+            <span class="text-lime/20">/</span>
+            <span>Keyboard &amp; Touch</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <p class="font-mono text-[11px] uppercase tracking-wide text-lime/30 text-center" style="margin-top: clamp(2rem, 6vh, 3rem);">
+      More degenerate games in the pipeline. Probably.
+    </p>
+
+  </div>
+
+<script>
+  // Ambient animated sparkline preview
+  const canvas = document.getElementById('preview');
+  const ctx = canvas.getContext('2d');
+  let w, h, dpr;
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = canvas.clientWidth;
+    h = canvas.clientHeight;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const points = [];
+  const maxPoints = 60;
+  let t = 0;
+  for (let i = 0; i < maxPoints; i++) points.push(0.55);
+
+  function step() {
+    t += 0.045;
+    const next = 0.5 + Math.sin(t) * 0.18 + Math.sin(t * 2.7) * 0.09 + (Math.random() - 0.5) * 0.05;
+    points.push(Math.max(0.12, Math.min(0.88, next)));
+    if (points.length > maxPoints) points.shift();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+
+    // faint grid
+    ctx.strokeStyle = 'rgba(0,255,102,0.08)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 24) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+    }
+    for (let y = 0; y < h; y += 24) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+
+    // line
+    ctx.beginPath();
+    points.forEach((p, i) => {
+      const x = (i / (maxPoints - 1)) * w;
+      const y = h - p * h;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = '#00ff66';
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(0,255,102,0.8)';
+    ctx.shadowBlur = 10;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // tip dot
+    const lastX = w;
+    const lastY = h - points[points.length - 1] * h;
+    ctx.beginPath();
+    ctx.arc(lastX - 2, lastY, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#00ff66';
+    ctx.shadowColor = 'rgba(0,255,102,0.9)';
+    ctx.shadowBlur = 12;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function loop() {
+    step();
+    draw();
+    if (!reduceMotion) requestAnimationFrame(loop);
+  }
+  if (reduceMotion) { draw(); } else { loop(); }
+</script>
+
+</body>
+</html>
